@@ -25,9 +25,9 @@ def add_person(name, checklist, token):
     }
     '''
     name = name.lower().strip()
-    d = json.loads(open(PESSOAS_DB).read())
+    d = json.loads(open(PESSOAS_DB.replace('{token}',token)).read())
     d[name] = checklist
-    open(PESSOAS_DB, 'w').write(json.dumps(d))
+    open(PESSOAS_DB.replace('{token}',token), 'w').write(json.dumps(d))
     return True
 
 def load_person(name, token):
