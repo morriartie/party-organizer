@@ -1,0 +1,3 @@
+# Ignore pix.jpeg in any subdirectory under parties/
+app/parties/*/pix.jpeg
+app/__pycache__
