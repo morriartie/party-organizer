@@ -7,12 +7,13 @@ import streamlit as st
 import lib
 
 
-remap_item = {
-"refri_e_suco":"Refri e Suco",
-"salgados_e_doces":"Salgados e Doces",
-"cachaca":"Cachaça",
-"cerveja":"Cerveja"
-}
+#remap_item = {
+#"refri_e_suco":"Refri e Suco",
+#"salgados_e_doces":"Salgados e Doces",
+#"cachaca":"Cachaça",
+#"cerveja":"Cerveja"
+#}
+category_items = lib.CATEGORIAS
 
 
 def info_page(token):
@@ -31,16 +32,15 @@ def subscription_page(token):
 
     # Checkboxes for various consumable items
     st.write("O que vai consumir:")
-    cerveja = st.checkbox("Cerveja")
-    cachaca = st.checkbox("Cachaça")
-    salgados_doces = st.checkbox("Salgados e Doces")
-    refri_suco = st.checkbox("Refri e Suco")
+    
+    categories = {v:st.checkbox(v) for v in category_items}
 
     vegan = st.checkbox("Dieta vegana")
 
     if st.button("Salvar"):
         st.session_state.nome = nome
-        d = {"consumo":{"cerveja": cerveja, "cachaca": cachaca, "salgados_e_doces": salgados_doces, "refri_e_suco": refri_suco}, "vegano":vegan}
+        #d = {"consumo":{"cerveja": cerveja, "cachaca": cachaca, "salgados_e_doces": salgados_doces, "refri_e_suco": refri_suco}, "vegano":vegan}
+        d = {"consumo": categories, "vegano": vegan}
         lib.add_person(nome, d, token)
         st.success("Dados salvos com sucesso!")
         lib.system_message(f"{nome} entrou na festa!", token)
@@ -74,7 +74,7 @@ def subscription_status_page(token):
 
         st.checkbox("vegano", vegan, disabled=True)
 
-        categorias = [remap_item[v] for v,k in lib.load_person(nome, token)[1]['consumo'].items() if k]
+        categorias = [v for v,k in lib.load_person(nome, token)[1]['consumo'].items() if k]
 
         df = lib.get_items(token)
         df['total'] = df['preco_unit'] * df['quantidade']
@@ -128,7 +128,7 @@ def add_items_page(token):
             st.error("cadastro não encontrado")  
     prod_name = st.text_input("Nome do produto:")
     quant = st.text_input("Quantidade: ")
-    category = st.selectbox('Categoria: ', ["Cerveja", "Cachaça", "Salgados e Doces", "Refri e Suco"])
+    category = st.selectbox('Categoria: ', category_items)
     unit_value = st.text_input("Valor unitário")
     vegan = st.checkbox("Vegano")
     if st.button("Inserir"):

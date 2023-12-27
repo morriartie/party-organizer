@@ -1,5 +1,5 @@
 responsavel,produto,quantidade,categoria,preco_unit,vegano
-gabriel,coca-cola,7,Refri e Suco,9.0,
+gabriel,coca-cola,6,Refri e Suco,9.0,
 gabriel,black label,1,Cachaça,200.0,
 theresa,saguado,200,Salgados e Doces,0.5,
 giovana,salgadinho,200,Salgados e Doces,0.5,
@@ -8,4 +8,5 @@ gabriel,jesus,5,Refri e Suco,4.0,
 gabriel,tofu,5,Salgados e Doces,5.0,True
 gabriel3,alface,1,Salgados e Doces,2.0,True
 ze.bucego,chups,99,Salgados e Doces,0.1,True
-bingo.p,agua com cloro,1,Refri e Suco,1,False
+bingo.p,agua com cloro,1,Refri e Suco,1.0,False
+gabriel,docinho,10,Salgados e Doces,1,True

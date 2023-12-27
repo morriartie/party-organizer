@@ -11,24 +11,24 @@ ITEMS_DB = "parties/{token}/items.csv"
 CHAT_DB = "parties/{token}/chat.json"
 INFO_FILE = "parties/{token}/info.md"
 
-CODE_TO_PROD_NAME = {
-    "cerveja": "Cerveja",
-    "cachaca": "Cachaça",
-    "salgados_e_doces": "Salgados e Doces",
-    "refri_e_suco": "Refri e Suco" 
-}
+#CODE_TO_PROD_NAME = {
+#    "cerveja": "Cerveja",
+#    "cachaca": "Cachaça",
+#    "salgados_e_doces": "Salgados e Doces",
+#    "refri_e_suco": "Refri e Suco" 
+#}
 
-PROD_NAME_TO_CODE = {v:k for k,v in CODE_TO_PROD_NAME.items()}
+CATEGORIAS = [
+    "Cerveja",
+    "Cachaça",
+    "Salgados e Doces",
+    "Refri e Suco",
+    "Utensílios",
+]
+
+#PROD_NAME_TO_CODE = {v:k for k,v in CODE_TO_PROD_NAME.items()}
 
 def add_person(name, user_data, token):
-    '''
-    {
-    "cerveja":True,
-    "cachaca":True,
-    "salgados_e_doces":True,
-    "refri_e_suco":True
-    }
-    '''
     name = name.lower().strip()
     d = load_clients(token)
     d[name] = user_data
@@ -106,7 +106,7 @@ def get_consumers_for_product(product_name, token):
     for user in users:
         selected_categories = get_user_categories(user, token)
         is_vegan = is_user_vegan(user, token)
-        selected_categories = [CODE_TO_PROD_NAME[c] for c in selected_categories]
+        selected_categories = [c for c in selected_categories]
         if category not in selected_categories:
             continue
         if is_vegan and not prod_vegan:
@@ -158,7 +158,7 @@ def remove_product(df, quant, token):
 
 def list_users_detailed(token):
     clients = load_clients(token)
-    categories = [v for k,v in CODE_TO_PROD_NAME.items()]
+    categories = CATEGORIAS #[v for k,v in CODE_TO_PROD_NAME.items()]
     columns = ["Nome", *categories, "Vegano", "Criacao"]
     d = {v:[] for v in columns}
     for client in clients:
@@ -166,8 +166,11 @@ def list_users_detailed(token):
         d["Criacao"].append(clients[client]['creation'])
         d["Vegano"].append(clients[client]['vegano'])
         for category in categories:
-            cat_code = PROD_NAME_TO_CODE[category]
-            d[category].append(clients[client]['consumo'][cat_code])
+            v = clients[client]['consumo'].get(category)
+            if v:
+                d[category].append(v)
+            else:
+                d[category].append(False)
     return pd.DataFrame(d)
 
 def user_message(user, message, token):
