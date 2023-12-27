@@ -146,6 +146,34 @@ def remove_items_page(token):
         prod_name, units = lib.remove_product(selected_df, quant, token)
         st.success(f"Retirado {units} unidades do produto {prod_name}")
 
+def chat_page(token):
+    # Always display chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if 'nome' in st.session_state:
+        nome = st.session_state.nome
+    else:
+        nome = ''
+
+    if nome:
+        prompt = st.chat_input("Type your message")
+        if prompt:
+            full_prompt = f"***{nome}:*** {prompt}"
+            st.session_state.messages.append({"role": "user", "content": full_prompt})
+            st.experimental_rerun()
+    else:
+        nome = st.text_input("Nome:")
+        if st.button("Verificar"):
+            r, pref = lib.load_person(nome, token)
+            if r:
+                st.session_state.nome = nome
+                valid_name = True
+
 
 def main():
     available_tokens = os.listdir('parties')
@@ -159,7 +187,7 @@ def main():
 
     if valid_token:
         st.sidebar.title("Navegação")
-        page = st.sidebar.radio("Go to", ("Inscrição", "Conta", "Adicionar Item", "Remover Item", "Lista de Convidados", "Verificar Itens"))
+        page = st.sidebar.radio("Go to", ("Inscrição", "Conta", "Adicionar Item", "Remover Item", "Lista de Convidados", "Verificar Itens", "Chat"))
 
         if page == "Inscrição":
             subscription_page(token)
@@ -173,6 +201,8 @@ def main():
             list_atendees(token)
         elif page == "Verificar Itens":
             check_items_page(token)
+        elif page == "Chat":
+            chat_page(token)
 
 if __name__ == "__main__":
     main()
