@@ -1,3 +1,4 @@
+from datetime import datetime as dt
 import configparser as cfg
 import json
 
@@ -14,6 +15,7 @@ CODE_TO_PROD_NAME = {
     "refri_e_suco": "Refri e Suco" 
 }
 
+PROD_NAME_TO_CODE = {v:k for k,v in CODE_TO_PROD_NAME.items()}
 
 def add_person(name, user_data, token):
     '''
@@ -25,14 +27,22 @@ def add_person(name, user_data, token):
     }
     '''
     name = name.lower().strip()
-    d = json.loads(open(PESSOAS_DB.replace('{token}',token)).read())
+    d = load_clients(token)
     d[name] = user_data
-    open(PESSOAS_DB.replace('{token}',token), 'w').write(json.dumps(d))
+
+    creation = str(dt.now()).split('.')[0]
+    if name in list_users(token):
+        person_data = load_person(name, token)[1]
+        if 'creation' in person_data:
+            creation = person_data['creation']
+    d[name]['creation'] = creation
+
+    save_clients(d, token)
     return True
 
 def load_person(name, token):
     name = name.lower().strip()
-    d = json.loads(open(PESSOAS_DB.replace('{token}',token)).read())
+    d = load_clients(token)
     person_data = d.get(name)
     if person_data:
         return True, person_data
@@ -67,7 +77,7 @@ def get_product_category(product_name, token):
     return df[df['produto']==product_name]['categoria'].values[0]
 
 def list_users(token):
-    return list(json.loads(open(PESSOAS_DB.replace('{token}',token)).read()).keys())
+    return list(load_clients(token).keys())
 
 def list_products(token):
     df = get_items(token)
@@ -142,7 +152,21 @@ def remove_product(df, quant, token):
         df.loc[df['produto'] == prod_name, 'quantidade'] = new_quant 
         save_items(df, token)
     return prod_name, max_rem
-        
+
+def list_users_detailed(token):
+    clients = load_clients(token)
+    categories = [v for k,v in CODE_TO_PROD_NAME.items()]
+    columns = ["Nome", *categories, "Vegano", "Criacao"]
+    d = {v:[] for v in columns}
+    for client in clients:
+        d["Nome"].append(client)
+        d["Criacao"].append(clients[client]['creation'])
+        d["Vegano"].append(clients[client]['vegano'])
+        for category in categories:
+            cat_code = PROD_NAME_TO_CODE[category]
+            d[category].append(clients[client]['consumo'][cat_code])
+    return pd.DataFrame(d)
+    
 def get_items(token):
     filename = ITEMS_DB.replace('{token}',token)
     df = pd.read_csv(filename)
@@ -154,3 +178,10 @@ def get_items(token):
 def save_items(df, token):
     filename = ITEMS_DB.replace('{token}',token)
     df.to_csv(filename, index=False)
+
+def load_clients(token):
+    return json.loads(open(PESSOAS_DB.replace('{token}',token)).read())
+
+def save_clients(d, token):
+    open(PESSOAS_DB.replace('{token}',token), 'w').write(json.dumps(d))
+    return True

@@ -1,3 +1,4 @@
+from datetime import datetime as dt
 import configparser as cfg
 import os
 
@@ -31,7 +32,7 @@ def subscription_page(token):
     vegan = st.checkbox("Dieta vegana")
 
     if st.button("Salvar"):
-        d = {"consumo":{"cerveja": cerveja, "cachaca": cachaca, "salgados_e_doces": salgados_doces, "refri_e_suco": salgados_doces}, "vegano":vegan}
+        d = {"consumo":{"cerveja": cerveja, "cachaca": cachaca, "salgados_e_doces": salgados_doces, "refri_e_suco": refri_suco}, "vegano":vegan}
         lib.add_person(nome, d, token)
         st.success("Dados salvos com sucesso!")
         
@@ -127,6 +128,11 @@ def check_items_page(token):
     total_val = sum(df['total'])
     st.title(f"R$ {total_val:.2f}".replace(".",","))
 
+def list_atendees(token):
+    df = lib.list_users_detailed(token)
+    st.dataframe(df)
+
+
 def remove_items_page(token):
     nome = st.text_input("Nome cadastrado:")
     df = lib.get_items(token)
@@ -153,7 +159,7 @@ def main():
 
     if valid_token:
         st.sidebar.title("Navegação")
-        page = st.sidebar.radio("Go to", ("Inscrição", "Conta", "Adicionar Item", "Remover Item", "Verificar Itens"))
+        page = st.sidebar.radio("Go to", ("Inscrição", "Conta", "Adicionar Item", "Remover Item", "Lista de Convidados", "Verificar Itens"))
 
         if page == "Inscrição":
             subscription_page(token)
@@ -163,6 +169,8 @@ def main():
             add_items_page(token)
         elif page == "Remover Item":
             remove_items_page(token)
+        elif page == "Lista de Convidados":
+            list_atendees(token)
         elif page == "Verificar Itens":
             check_items_page(token)
 
