@@ -147,11 +147,14 @@ def remove_items_page(token):
         st.success(f"Retirado {units} unidades do produto {prod_name}")
 
 def chat_page(token):
+    chat = lib.load_chat(token)
+    st.session_state.messages = chat
     # Always display chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    #if "messages" not in st.session_state:
+    #    st.session_state.messages = []
 
     for message in st.session_state.messages:
+        print(f"message: {str(message)}")
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
@@ -165,6 +168,7 @@ def chat_page(token):
         if prompt:
             full_prompt = f"***{nome}:*** {prompt}"
             st.session_state.messages.append({"role": "user", "content": full_prompt})
+            lib.save_chat(st.session_state.messages, token)
             st.experimental_rerun()
     else:
         nome = st.text_input("Nome:")

@@ -1,12 +1,14 @@
 from datetime import datetime as dt
 import configparser as cfg
 import json
+import os
 
 import pandas as pd
 
 
 PESSOAS_DB = "parties/{token}/convidados.json"
 ITEMS_DB = "parties/{token}/items.csv"
+CHAT_DB = "parties/{token}/chat.json"
 
 CODE_TO_PROD_NAME = {
     "cerveja": "Cerveja",
@@ -166,6 +168,19 @@ def list_users_detailed(token):
             cat_code = PROD_NAME_TO_CODE[category]
             d[category].append(clients[client]['consumo'][cat_code])
     return pd.DataFrame(d)
+
+def save_chat(chat, token):
+    print(f"saving: {chat}")
+    return open(CHAT_DB.replace('{token}',token),'w').write(json.dumps(chat))
+    
+def load_chat(token):
+    fname = CHAT_DB.split('/')[-1]
+    exists = fname in os.listdir(f'parties/{token}/')
+    if not exists:
+        return []
+    content = open(CHAT_DB.replace('{token}',token)).read()
+    return json.loads(content)
+
     
 def get_items(token):
     filename = ITEMS_DB.replace('{token}',token)
