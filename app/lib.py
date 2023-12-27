@@ -9,6 +9,7 @@ import pandas as pd
 PESSOAS_DB = "parties/{token}/convidados.json"
 ITEMS_DB = "parties/{token}/items.csv"
 CHAT_DB = "parties/{token}/chat.json"
+INFO_FILE = "parties/{token}/info.md"
 
 CODE_TO_PROD_NAME = {
     "cerveja": "Cerveja",
@@ -169,8 +170,29 @@ def list_users_detailed(token):
             d[category].append(clients[client]['consumo'][cat_code])
     return pd.DataFrame(d)
 
+def user_message(user, message, token):
+    timestamp = ':'.join(str(dt.now()).split(':')[:2])
+    chat = load_chat(token)
+    chat.append({"role":"user", "user":user ,"content":f"{message}", "time":timestamp})
+    save_chat(chat, token)
+
+def system_message(message, token):
+    timestamp = ':'.join(str(dt.now()).split(':')[:2])
+    chat = load_chat(token)
+    chat.append({"role":"assistant", "content":message, "time":timestamp})
+    save_chat(chat, token)
+
+def get_info(token):
+    path = INFO_FILE.replace('{token}',token) 
+    filename = path.split('/')[-1]
+    exists = filename in os.listdir(f'parties/{token}/')
+    if not exists:
+        default_text = "<- Acesse o menu da lateral"
+        open(path,'w').write(DEFAULT_TXT)
+        return DEFAULT_TXT
+    return open(path).read()
+
 def save_chat(chat, token):
-    print(f"saving: {chat}")
     return open(CHAT_DB.replace('{token}',token),'w').write(json.dumps(chat))
     
 def load_chat(token):

@@ -15,12 +15,19 @@ remap_item = {
 }
 
 
+def info_page(token):
+    text = lib.get_info(token)
+    st.markdown(text)
+
 # Function for the Subscription Page
 def subscription_page(token):
     st.title("Inscrição")
 
     # Text input for name
-    nome = st.text_input("Nome:")
+    default_value = ''
+    if 'nome' in st.session_state:
+        default_value = st.session_state.nome
+    nome = st.text_input("Nome:", value=default_value)
 
     # Checkboxes for various consumable items
     st.write("O que vai consumir:")
@@ -32,19 +39,25 @@ def subscription_page(token):
     vegan = st.checkbox("Dieta vegana")
 
     if st.button("Salvar"):
+        st.session_state.nome = nome
         d = {"consumo":{"cerveja": cerveja, "cachaca": cachaca, "salgados_e_doces": salgados_doces, "refri_e_suco": refri_suco}, "vegano":vegan}
         lib.add_person(nome, d, token)
         st.success("Dados salvos com sucesso!")
+        lib.system_message(f"{nome} entrou na festa!", token)
         
 
 # Function for the Subscription Status Page
 def subscription_status_page(token):
     st.title("Seus dados:")
 
-    nome = st.text_input("Nome cadastrado:")
+    default_value = ''
+    if 'nome' in st.session_state:
+        default_value = st.session_state.nome
+    nome = st.text_input("Nome cadastrado:", value=default_value)
     nome = nome.lower().strip()
 
     if st.button("Carregar Dados"):
+        st.session_state.nome = nome
         # Fetching data using the load_person function
         r, preferences = lib.load_person(nome, token)
         consumo = preferences['consumo']
@@ -65,7 +78,9 @@ def subscription_status_page(token):
 
         df = lib.get_items(token)
         df['total'] = df['preco_unit'] * df['quantidade']
-        df = df[df['categoria'].isin(categorias)]
+
+        #df = df[df['categoria'].isin(categorias)]
+
         st.title("Contribuições:")
         own_df = df[df['responsavel']==nome]
         st.dataframe(own_df)
@@ -100,7 +115,11 @@ def subscription_status_page(token):
 def add_items_page(token):
     st.title("Adicione produtos que você vai levar:")
 
-    nome = st.text_input("Nome:")
+    default_value = ''
+    if 'nome' in st.session_state:
+        default_value = st.session_state.nome
+    nome = st.text_input("Nome:", value=default_value)
+
     if st.button("Verificar"):
         r, preferences = lib.load_person(nome, token)
         if r:
@@ -118,6 +137,7 @@ def add_items_page(token):
             st.error(msg)
         else:
             st.success("Produto adicionado com sucesso")
+            lib.system_message(f"{nome} adicionou {quant} unidade(s) do produto {prod_name}", token)
 
 def check_items_page(token):
     df = lib.get_items(token)
@@ -134,7 +154,11 @@ def list_atendees(token):
 
 
 def remove_items_page(token):
-    nome = st.text_input("Nome cadastrado:")
+    default_value = ''
+    if 'nome' in st.session_state:
+        default_value = st.session_state.nome
+    nome = st.text_input("Nome cadastrado:", value=default_value)
+
     df = lib.get_items(token)
     items = df[df['responsavel']==nome]['produto'].values
     selecao = st.selectbox("Item a ser removido:", items)
@@ -145,6 +169,7 @@ def remove_items_page(token):
     if st.button("remover"):
         prod_name, units = lib.remove_product(selected_df, quant, token)
         st.success(f"Retirado {units} unidades do produto {prod_name}")
+        lib.system_message(f"{nome} retirou {units} unidade(s) do produto {prod_name}", token)
 
 def chat_page(token):
     chat = lib.load_chat(token)
@@ -154,8 +179,15 @@ def chat_page(token):
     #    st.session_state.messages = []
 
     for message in st.session_state.messages:
-        print(f"message: {str(message)}")
+        is_assistant = message["role"]
+        reference = "**SYSTEM** @ "
+        if 'user' in message:
+            reference = f"**{message['user']}** @ "
+        time = ''
+        if 'time' in message:
+            time = f"*{message['time']}*"
         with st.chat_message(message["role"]):
+            st.caption(f"{reference.upper()} {time}")
             st.markdown(message["content"])
 
     if 'nome' in st.session_state:
@@ -166,9 +198,7 @@ def chat_page(token):
     if nome:
         prompt = st.chat_input("Type your message")
         if prompt:
-            full_prompt = f"***{nome}:*** {prompt}"
-            st.session_state.messages.append({"role": "user", "content": full_prompt})
-            lib.save_chat(st.session_state.messages, token)
+            lib.user_message(nome, prompt, token)
             st.experimental_rerun()
     else:
         nome = st.text_input("Nome:")
@@ -191,9 +221,11 @@ def main():
 
     if valid_token:
         st.sidebar.title("Navegação")
-        page = st.sidebar.radio("Go to", ("Inscrição", "Conta", "Adicionar Item", "Remover Item", "Lista de Convidados", "Verificar Itens", "Chat"))
+        page = st.sidebar.radio("Go to", ("Info", "Inscrição", "Conta", "Adicionar Item", "Remover Item", "Lista de Convidados", "Verificar Itens", "Chat"))
 
-        if page == "Inscrição":
+        if page == "Info":
+            info_page(token)
+        elif page == "Inscrição":
             subscription_page(token)
         elif page == "Conta":
             subscription_status_page(token)
