@@ -15,7 +15,7 @@ CODE_TO_PROD_NAME = {
 }
 
 
-def add_person(name, checklist, token):
+def add_person(name, user_data, token):
     '''
     {
     "cerveja":True,
@@ -26,7 +26,7 @@ def add_person(name, checklist, token):
     '''
     name = name.lower().strip()
     d = json.loads(open(PESSOAS_DB.replace('{token}',token)).read())
-    d[name] = checklist
+    d[name] = user_data
     open(PESSOAS_DB.replace('{token}',token), 'w').write(json.dumps(d))
     return True
 
@@ -39,7 +39,7 @@ def load_person(name, token):
     else:
         return False, {}
 
-def add_item(owner, product_name, quantity, category, unit_price, token):
+def add_item(owner, product_name, quantity, category, unit_price, vegan, token):
     # Checking if the owner exists
     if not load_person(owner, token):
         return False, "Cadastro não encontrado"
@@ -56,7 +56,7 @@ def add_item(owner, product_name, quantity, category, unit_price, token):
     #
     owner = owner.lower().strip()
     df = get_items(token)
-    new_data = {"responsavel": [owner], "produto": [product_name], "quantidade": [quantity], "categoria": [category], "preco_unit": [unit_price]}
+    new_data = {"responsavel": [owner], "produto": [product_name], "quantidade": [quantity], "categoria": [category], "preco_unit": [unit_price], "vegano":[vegan]}
     df_new_data = pd.DataFrame(new_data)
     df_new = pd.concat([df, df_new_data], ignore_index=True)
     save_items(df_new, token)
@@ -75,17 +75,30 @@ def list_products(token):
 
 def get_user_categories(user, token):
     r, user_data = load_person(user, token)
-    return [k for k,v in user_data.items() if v]
+    return [k for k,v in user_data['consumo'].items() if v]
+
+def is_user_vegan(user, token):
+    r, user_data = load_person(user, token)
+    return user_data['vegano']
+
+def is_product_vegan(product_name, token):
+    df = get_items(token)
+    return df[df['produto']==product_name]['vegano'].values[0] == True
 
 def get_consumers_for_product(product_name, token):
     category = get_product_category(product_name, token)
     users = list_users(token)
+    prod_vegan = is_product_vegan(product_name, token)
     consumers = []
     for user in users:
         selected_categories = get_user_categories(user, token)
+        is_vegan = is_user_vegan(user, token)
         selected_categories = [CODE_TO_PROD_NAME[c] for c in selected_categories]
-        if category in selected_categories:
-            consumers.append(user)
+        if category not in selected_categories:
+            continue
+        if is_vegan and not prod_vegan:
+            continue
+        consumers.append(user)
     return consumers
 
 def get_product_price(product_name, token):
@@ -127,6 +140,7 @@ def remove_product(df, quant, token):
         save_items(df, token)
     else:
         df.loc[df['produto'] == prod_name, 'quantidade'] = new_quant 
+        save_items(df, token)
     return prod_name, max_rem
         
 def get_items(token):

@@ -28,8 +28,10 @@ def subscription_page(token):
     salgados_doces = st.checkbox("Salgados e Doces")
     refri_suco = st.checkbox("Refri e Suco")
 
+    vegan = st.checkbox("Dieta vegana")
+
     if st.button("Salvar"):
-        d = {"cerveja": cerveja, "cachaca": cachaca, "salgados_e_doces": salgados_doces, "refri_e_suco": salgados_doces}
+        d = {"consumo":{"cerveja": cerveja, "cachaca": cachaca, "salgados_e_doces": salgados_doces, "refri_e_suco": salgados_doces}, "vegano":vegan}
         lib.add_person(nome, d, token)
         st.success("Dados salvos com sucesso!")
         
@@ -44,17 +46,21 @@ def subscription_status_page(token):
     if st.button("Carregar Dados"):
         # Fetching data using the load_person function
         r, preferences = lib.load_person(nome, token)
+        consumo = preferences['consumo']
+        vegan = preferences['vegano']
 
         if r:
             st.write(f"Consumos:")
-            for item, value in preferences.items():
+            for item, value in consumo.items():
                 #st.write(f"{item}: {'Sim' if value else 'Não'}")
                 st.checkbox(item.capitalize(), value, disabled=True)
             st.write("(Edite na aba de inscrição)")
         else:
             st.warning("Nome não encontrado.")
 
-        categorias = [remap_item[v] for v,k in lib.load_person(nome, token)[1].items() if k]
+        st.checkbox("vegano", vegan, disabled=True)
+
+        categorias = [remap_item[v] for v,k in lib.load_person(nome, token)[1]['consumo'].items() if k]
 
         df = lib.get_items(token)
         df['total'] = df['preco_unit'] * df['quantidade']
@@ -62,16 +68,22 @@ def subscription_status_page(token):
         st.title("Contribuições:")
         own_df = df[df['responsavel']==nome]
         st.dataframe(own_df)
+
         st.title("Custo total das contribuições:")
         own_total_value = sum(own_df['total'])
         st.title(f"R$ {own_total_value:.2f}".replace(',','.'))
+
         st.title("Lista de consumíveis disponíveis:")
         available_df = df[df['categoria'].isin(categorias)]
+        if vegan:
+            available_df = available_df[available_df['vegano']==True]
         st.dataframe(available_df)
+
         st.title("Valor total da parte:")
         #available_df['total'] = available_df['preco_unit'] * available_df['quantidade']
         total_value = lib.get_amount_for_user(nome, token)
         st.title(f"R$ {total_value:.2f}".replace('.',','))
+
         st.title("Valor a ser pago (total - gastos):")
         st.title(f"R$ {total_value-own_total_value:.2f}")
         st.title("Pix:")
@@ -79,6 +91,7 @@ def subscription_status_page(token):
         config = cfg.ConfigParser()
         config.read(f'parties/{token}/info.conf')
         pix_key = config['DEFAULT']['pix_key']
+
         st.write("chave pix:")
         st.write(pix_key)
 
@@ -97,8 +110,9 @@ def add_items_page(token):
     quant = st.text_input("Quantidade: ")
     category = st.selectbox('Categoria: ', ["Cerveja", "Cachaça", "Salgados e Doces", "Refri e Suco"])
     unit_value = st.text_input("Valor unitário")
+    vegan = st.checkbox("Vegano")
     if st.button("Inserir"):
-        r, msg = lib.add_item(nome, prod_name, quant, category, unit_value, token)
+        r, msg = lib.add_item(nome, prod_name, quant, category, unit_value, vegan, token)
         if not r:
             st.error(msg)
         else:
