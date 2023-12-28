@@ -10,6 +10,7 @@ PESSOAS_DB = "parties/{token}/convidados.json"
 ITEMS_DB = "parties/{token}/items.csv"
 CHAT_DB = "parties/{token}/chat.json"
 INFO_FILE = "parties/{token}/info.md"
+CATEGORIES_FILE = "parties/{token}/categories.json"
 
 #CODE_TO_PROD_NAME = {
 #    "cerveja": "Cerveja",
@@ -20,10 +21,19 @@ INFO_FILE = "parties/{token}/info.md"
 
 CATEGORIAS = [
     "Cerveja",
-    "Cachaça",
-    "Salgados e Doces",
-    "Refri e Suco",
+    "Gin",
+    "Whisky",
+    "Rum",
+    "Vodka",
+    "Champagne",
+    "Suco",
+    "Salgados",
+    "Doce",
+    "Refri",
+    "Vinho",
+    "Água",
     "Utensílios",
+    "ETC",
 ]
 
 #PROD_NAME_TO_CODE = {v:k for k,v in CODE_TO_PROD_NAME.items()}
