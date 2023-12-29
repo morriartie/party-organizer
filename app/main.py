@@ -14,7 +14,7 @@ import lib
 #"cerveja":"Cerveja"
 #}
 category_items = lib.CATEGORIAS
-
+query_params = st.experimental_get_query_params()
 
 def info_page(token):
     text = lib.get_info(token)
@@ -210,9 +210,25 @@ def chat_page(token):
 
 
 def main():
+    pages = ("Info", "Inscrição", "Conta", "Adicionar Item", "Remover Item", "Lista de Convidados", "Verificar Itens", "Chat") 
+    default_page = 0
+
+    if 'token' in query_params:
+        token_value = query_params['token'][0]
+    else:
+        token_value = ''
+
+    if 'page' in query_params and query_params['page'][0] in pages:
+        default_page = pages.index(query_params['page'][0])
+
+    if 'nome' in query_params:
+        st.session_state.nome = query_params['nome'][0]
+
     available_tokens = os.listdir('parties')
-    token = st.sidebar.text_input("token (veja no grupo): ")
+    token = st.sidebar.text_input("token (veja no grupo): ", value=token_value)
     valid_token = token in available_tokens
+
+     
 
     if not valid_token:
         st.sidebar.error(f"token invalido, pergunte para (98)98270-0001")
@@ -221,7 +237,7 @@ def main():
 
     if valid_token:
         st.sidebar.title("Navegação")
-        page = st.sidebar.radio("Go to", ("Info", "Inscrição", "Conta", "Adicionar Item", "Remover Item", "Lista de Convidados", "Verificar Itens", "Chat"))
+        page = st.sidebar.radio("Go to", pages, index=default_page)
 
         if page == "Info":
             info_page(token)
