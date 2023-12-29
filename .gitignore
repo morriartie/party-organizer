@@ -2,3 +2,4 @@
 app/parties/*/pix.jpeg
 app/__pycache__
 app/parties/*
+tools/*
